@@ -1,2 +1,2 @@
 # chatsnavi
-A navigator to GPT chat services
+A navigator Chrome extension to GPT chat services
