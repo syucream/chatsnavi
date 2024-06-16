@@ -7,8 +7,11 @@ const MENU_EXP2 = "exp2";
 
 const operateChatGPT = (promptText: string) => {
   setTimeout(() => {
-    const userPrompt: HTMLTextAreaElement | null = document.querySelector('#prompt-textarea');
-    const submitButton: HTMLButtonElement | null = document.querySelector('button[data-testid="fruitjuice-send-button"]');
+    const userPrompt: HTMLTextAreaElement | null =
+      document.querySelector("#prompt-textarea");
+    const submitButton: HTMLButtonElement | null = document.querySelector(
+      'button[data-testid="fruitjuice-send-button"]',
+    );
 
     if (userPrompt && submitButton) {
       userPrompt.value = promptText;
@@ -22,8 +25,10 @@ const operateChatGPT = (promptText: string) => {
 
 const operateGemini = (promptText: string) => {
   setTimeout(() => {
-    const userPrompt: HTMLParagraphElement | null  = document.querySelector('rich-textarea')?.querySelector('p') ?? null;
-    const submitButton: HTMLButtonElement | null = document.querySelector('.send-button');
+    const userPrompt: HTMLParagraphElement | null =
+      document.querySelector("rich-textarea")?.querySelector("p") ?? null;
+    const submitButton: HTMLButtonElement | null =
+      document.querySelector(".send-button");
 
     if (userPrompt && submitButton) {
       userPrompt.textContent = promptText;
@@ -43,70 +48,77 @@ const updateContextMenus = () => {
   chrome.contextMenus.create({
     id: MENU_ROOT,
     title: "ChatsNavi",
-    contexts: ["all"]
+    contexts: ["all"],
   });
 
   chrome.contextMenus.create({
     id: MENU_EXP1,
     parentId: MENU_ROOT,
     title: "ChatGPT test",
-    contexts: ["all"]
+    contexts: ["all"],
   });
   chrome.contextMenus.create({
     id: MENU_EXP2,
     parentId: MENU_ROOT,
     title: "Gemini test",
-    contexts: ["all"]
+    contexts: ["all"],
   });
+};
 
-}
-
-chrome.runtime.onInstalled.addListener(updateContextMenus)
-chrome.runtime.onStartup.addListener(updateContextMenus)
+chrome.runtime.onInstalled.addListener(updateContextMenus);
+chrome.runtime.onStartup.addListener(updateContextMenus);
 // chrome.storage.onChanged.addListener(updateContextMenus)
 
-chrome.contextMenus.onClicked.addListener(((info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab) => {
-  if (tab == null) {
-    return
-  }
+chrome.contextMenus.onClicked.addListener(
+  (info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab) => {
+    if (tab == null) {
+      return;
+    }
 
-  if (info.menuItemId === MENU_EXP1) {
-    const selectedText = info.selectionText;
+    if (info.menuItemId === MENU_EXP1) {
+      const selectedText = info.selectionText;
 
-    chrome.tabs.create({ url: CHATGPT_URL }, (newTab: chrome.tabs.Tab) => {
-      chrome.tabs.onUpdated.addListener(function listener(tabId: number, changeInfo) {
-        if (tabId === newTab.id && changeInfo.status === "complete") {
-          chrome.tabs.onUpdated.removeListener(listener);
+      chrome.tabs.create({ url: CHATGPT_URL }, (newTab: chrome.tabs.Tab) => {
+        chrome.tabs.onUpdated.addListener(function listener(
+          tabId: number,
+          changeInfo,
+        ) {
+          if (tabId === newTab.id && changeInfo.status === "complete") {
+            chrome.tabs.onUpdated.removeListener(listener);
 
-          if (selectedText != null) {
-            chrome.scripting.executeScript({
-              target: { tabId: newTab.id },
-              func: operateChatGPT,
-              args: [selectedText],
-            });
+            if (selectedText != null) {
+              chrome.scripting.executeScript({
+                target: { tabId: newTab.id },
+                func: operateChatGPT,
+                args: [selectedText],
+              });
+            }
           }
-        }
+        });
       });
-    });
-  }
+    }
 
-  if (info.menuItemId === MENU_EXP2) {
-    const selectedText = info.selectionText;
+    if (info.menuItemId === MENU_EXP2) {
+      const selectedText = info.selectionText;
 
-    chrome.tabs.create({ url: GEMINI_URL }, (newTab: chrome.tabs.Tab) => {
-      chrome.tabs.onUpdated.addListener(function listener(tabId: number, changeInfo) {
-        if (tabId === newTab.id && changeInfo.status === "complete") {
-          chrome.tabs.onUpdated.removeListener(listener);
+      chrome.tabs.create({ url: GEMINI_URL }, (newTab: chrome.tabs.Tab) => {
+        chrome.tabs.onUpdated.addListener(function listener(
+          tabId: number,
+          changeInfo,
+        ) {
+          if (tabId === newTab.id && changeInfo.status === "complete") {
+            chrome.tabs.onUpdated.removeListener(listener);
 
-          if (selectedText != null) {
-            chrome.scripting.executeScript({
-              target: { tabId: newTab.id },
-              func: operateGemini,
-              args: [selectedText],
-            });
+            if (selectedText != null) {
+              chrome.scripting.executeScript({
+                target: { tabId: newTab.id },
+                func: operateGemini,
+                args: [selectedText],
+              });
+            }
           }
-        }
+        });
       });
-    });
-  }
-}));
+    }
+  },
+);
