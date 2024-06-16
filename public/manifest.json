@@ -15,6 +15,7 @@
     "scripting"
   ],
   "host_permissions": [
-    "https://chatgpt.com/*"
+    "https://chatgpt.com/*",
+    "https://gemini.google.com/*"
   ]
 }
