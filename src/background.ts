@@ -4,8 +4,9 @@ const GEMINI_URL = "https://gemini.google.com/app";
 const MENU_ROOT = "root";
 const MENU_EXP1 = "exp1";
 const MENU_EXP2 = "exp2";
+const MENU_CHATGPT = "chatgpt--";
 
-const operateChatGPT = (promptText: string) => {
+const operateChatGPT = (promptText: string, chatGPTSetting: ChatGPTSetting) => {
   setTimeout(() => {
     const userPrompt: HTMLTextAreaElement | null =
       document.querySelector("#prompt-textarea");
@@ -16,7 +17,9 @@ const operateChatGPT = (promptText: string) => {
     if (userPrompt && submitButton) {
       userPrompt.value = promptText;
       userPrompt.dispatchEvent(new InputEvent("input", { bubbles: true }));
-      submitButton.click();
+      if (chatGPTSetting.autoSubmit) {
+        submitButton.click();
+      }
     } else {
       console.error("Failed to operate on ChatGPT");
     }
@@ -32,10 +35,11 @@ const operateGemini = (promptText: string) => {
 
     if (userPrompt && submitButton) {
       userPrompt.textContent = promptText;
+      // TODO support toggle
       // delay to submit
-      setTimeout(() => {
-        submitButton.click();
-      }, 500);
+      // setTimeout(() => {
+      //   submitButton.click();
+      // }, 500);
     } else {
       console.error("Failed to operate on Gemini");
     }
@@ -52,22 +56,33 @@ const updateContextMenus = () => {
   });
 
   chrome.contextMenus.create({
-    id: MENU_EXP1,
-    parentId: MENU_ROOT,
-    title: "ChatGPT test",
-    contexts: ["all"],
-  });
-  chrome.contextMenus.create({
     id: MENU_EXP2,
     parentId: MENU_ROOT,
-    title: "Gemini test",
+    title: "[Experimental] Open Gemini",
     contexts: ["all"],
   });
+
+  chrome.storage.local.get("chatGPTSettings", (items) => {
+    if (items.chatGPTSettings) {
+      (items as { chatGPTSettings: ChatGPTSetting[] }).chatGPTSettings.forEach(
+        (setting, index) => {
+          chrome.contextMenus.create({
+            id: MENU_CHATGPT + index,
+            parentId: MENU_ROOT,
+            title: setting.name,
+            contexts: ["all"],
+          });
+        },
+      );
+    }
+  });
+
+  // TODO gemini
 };
 
 chrome.runtime.onInstalled.addListener(updateContextMenus);
 chrome.runtime.onStartup.addListener(updateContextMenus);
-// chrome.storage.onChanged.addListener(updateContextMenus)
+chrome.storage.onChanged.addListener(updateContextMenus);
 
 chrome.contextMenus.onClicked.addListener(
   (info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab) => {
@@ -75,32 +90,8 @@ chrome.contextMenus.onClicked.addListener(
       return;
     }
 
-    if (info.menuItemId === MENU_EXP1) {
-      const selectedText = info.selectionText;
-
-      chrome.tabs.create({ url: CHATGPT_URL }, (newTab: chrome.tabs.Tab) => {
-        chrome.tabs.onUpdated.addListener(function listener(
-          tabId: number,
-          changeInfo,
-        ) {
-          if (tabId === newTab.id && changeInfo.status === "complete") {
-            chrome.tabs.onUpdated.removeListener(listener);
-
-            if (selectedText != null) {
-              chrome.scripting.executeScript({
-                target: { tabId: newTab.id },
-                func: operateChatGPT,
-                args: [selectedText],
-              });
-            }
-          }
-        });
-      });
-    }
-
     if (info.menuItemId === MENU_EXP2) {
       const selectedText = info.selectionText;
-
       chrome.tabs.create({ url: GEMINI_URL }, (newTab: chrome.tabs.Tab) => {
         chrome.tabs.onUpdated.addListener(function listener(
           tabId: number,
@@ -108,7 +99,6 @@ chrome.contextMenus.onClicked.addListener(
         ) {
           if (tabId === newTab.id && changeInfo.status === "complete") {
             chrome.tabs.onUpdated.removeListener(listener);
-
             if (selectedText != null) {
               chrome.scripting.executeScript({
                 target: { tabId: newTab.id },
@@ -118,6 +108,48 @@ chrome.contextMenus.onClicked.addListener(
             }
           }
         });
+      });
+    }
+
+    if (
+      typeof info.menuItemId === "string" &&
+      info.menuItemId.startsWith(MENU_CHATGPT)
+    ) {
+      const settingIndex = parseInt(info.menuItemId.slice(MENU_CHATGPT.length));
+      const selectedText = info.selectionText;
+
+      chrome.storage.local.get("chatGPTSettings", (items) => {
+        if (items.chatGPTSettings) {
+          (
+            items as { chatGPTSettings: ChatGPTSetting[] }
+          ).chatGPTSettings.forEach((setting, index) => {
+            if (index === settingIndex) {
+              chrome.tabs.create(
+                { url: CHATGPT_URL },
+                (newTab: chrome.tabs.Tab) => {
+                  chrome.tabs.onUpdated.addListener(function listener(
+                    tabId: number,
+                    changeInfo,
+                  ) {
+                    if (
+                      tabId === newTab.id &&
+                      changeInfo.status === "complete"
+                    ) {
+                      chrome.tabs.onUpdated.removeListener(listener);
+                      if (selectedText != null) {
+                        chrome.scripting.executeScript({
+                          target: { tabId: newTab.id },
+                          func: operateChatGPT,
+                          args: [selectedText, setting],
+                        });
+                      }
+                    }
+                  });
+                },
+              );
+            }
+          });
+        }
       });
     }
   },

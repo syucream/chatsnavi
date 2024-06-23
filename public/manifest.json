@@ -8,11 +8,13 @@
   "action": {
     "default_popup": "popup.html"
   },
+  "options_page": "options.html",
   "permissions": [
     "activeTab",
     "tabs",
     "contextMenus",
-    "scripting"
+    "scripting",
+    "storage"
   ],
   "host_permissions": [
     "https://chatgpt.com/*",
