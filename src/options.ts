@@ -1,6 +1,8 @@
 interface ChatGPTSetting {
   name: string;
   autoSubmit: boolean;
+  activate: boolean;
+  gpt?: string;
 }
 
 const addChatGPTSettingsEventListeners = (
@@ -13,10 +15,14 @@ const addChatGPTSettingsEventListeners = (
     const row = element.insertRow();
     const nameCell = row.insertCell(0);
     const autoSubmitCell = row.insertCell(1);
-    const deleteCell = row.insertCell(2);
+    const activateCell = row.insertCell(2);
+    const gptCell = row.insertCell(3);
+    const deleteCell = row.insertCell(4);
 
     nameCell.innerHTML = `<input type="text" value="${chatGPTSettings.name}">`;
     autoSubmitCell.innerHTML = `<input type="checkbox" ${chatGPTSettings.autoSubmit ? "checked" : ""}>`;
+    activateCell.innerHTML = `<input type="checkbox" ${chatGPTSettings.activate ? "checked" : ""}>`;
+    gptCell.innerHTML = `<input type="text" value="${chatGPTSettings.gpt ?? ""}">`;
     deleteCell.innerHTML = `<button class="deleteRow">Delete</button>`;
 
     deleteCell.addEventListener("click", () => {
@@ -37,7 +43,11 @@ const addChatGPTSettingsEventListeners = (
   document
     .getElementById("appendChatGPTSetting")
     ?.addEventListener("click", () => {
-      appendRow(chatGPTSettingsBody, { name: "", autoSubmit: false });
+      appendRow(chatGPTSettingsBody, {
+        name: "",
+        autoSubmit: false,
+        activate: false,
+      });
     });
 };
 
@@ -60,7 +70,18 @@ document.addEventListener("DOMContentLoaded", function () {
         const autoSubmit = (
           row.cells[1].getElementsByTagName("input")[0] as HTMLInputElement
         ).checked;
-        chatGPTSettings.push({ name, autoSubmit });
+        const activate = (
+          row.cells[2].getElementsByTagName("input")[0] as HTMLInputElement
+        ).checked;
+        const gpt = (
+          row.cells[3].getElementsByTagName("input")[0] as HTMLInputElement
+        ).value;
+        chatGPTSettings.push({
+          name,
+          autoSubmit,
+          activate,
+          gpt: gpt.length > 0 ? gpt : undefined,
+        });
       }
 
       // TODO gemini

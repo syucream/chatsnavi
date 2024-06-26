@@ -2,7 +2,6 @@ const CHATGPT_URL = "https://chatgpt.com/";
 const GEMINI_URL = "https://gemini.google.com/app";
 
 const MENU_ROOT = "root";
-const MENU_EXP1 = "exp1";
 const MENU_EXP2 = "exp2";
 const MENU_CHATGPT = "chatgpt--";
 
@@ -124,8 +123,12 @@ chrome.contextMenus.onClicked.addListener(
             items as { chatGPTSettings: ChatGPTSetting[] }
           ).chatGPTSettings.forEach((setting, index) => {
             if (index === settingIndex) {
+              const url =
+                setting.gpt?.length ?? 0 > 0
+                  ? CHATGPT_URL + `g/${setting.gpt}`
+                  : CHATGPT_URL;
               chrome.tabs.create(
-                { url: CHATGPT_URL },
+                { url, active: setting.activate },
                 (newTab: chrome.tabs.Tab) => {
                   chrome.tabs.onUpdated.addListener(function listener(
                     tabId: number,
