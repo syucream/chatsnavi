@@ -2,8 +2,8 @@ const CHATGPT_URL = "https://chatgpt.com/";
 const GEMINI_URL = "https://gemini.google.com/app";
 
 const MENU_ROOT = "root";
-const MENU_EXP2 = "exp2";
 const MENU_CHATGPT = "chatgpt--";
+const MENU_GEMINI = "gemini--";
 
 const operateChatGPT = (promptText: string, chatGPTSetting: ChatGPTSetting) => {
   setTimeout(() => {
@@ -25,7 +25,7 @@ const operateChatGPT = (promptText: string, chatGPTSetting: ChatGPTSetting) => {
   }, 500);
 };
 
-const operateGemini = (promptText: string) => {
+const operateGemini = (promptText: string, geminiSettming: GeminiSetting) => {
   setTimeout(() => {
     const userPrompt: HTMLParagraphElement | null =
       document.querySelector("rich-textarea")?.querySelector("p") ?? null;
@@ -34,11 +34,12 @@ const operateGemini = (promptText: string) => {
 
     if (userPrompt && submitButton) {
       userPrompt.textContent = promptText;
-      // TODO support toggle
-      // delay to submit
-      // setTimeout(() => {
-      //   submitButton.click();
-      // }, 500);
+      if (geminiSettming.autoSubmit) {
+        // delay to submit
+        setTimeout(() => {
+          submitButton.click();
+        }, 500);
+      }
     } else {
       console.error("Failed to operate on Gemini");
     }
@@ -54,14 +55,7 @@ const updateContextMenus = () => {
     contexts: ["all"],
   });
 
-  chrome.contextMenus.create({
-    id: MENU_EXP2,
-    parentId: MENU_ROOT,
-    title: "[Experimental] Open Gemini",
-    contexts: ["all"],
-  });
-
-  chrome.storage.local.get("chatGPTSettings", (items) => {
+  chrome.storage.local.get(["chatGPTSettings", "geminiSettings"], (items) => {
     if (items.chatGPTSettings) {
       (items as { chatGPTSettings: ChatGPTSetting[] }).chatGPTSettings.forEach(
         (setting, index) => {
@@ -74,9 +68,20 @@ const updateContextMenus = () => {
         },
       );
     }
-  });
 
-  // TODO gemini
+    if (items.geminiSettings) {
+      (items as { geminiSettings: GeminiSetting[] }).geminiSettings.forEach(
+        (setting, index) => {
+          chrome.contextMenus.create({
+            id: MENU_GEMINI + index,
+            parentId: MENU_ROOT,
+            title: setting.name,
+            contexts: ["all"],
+          });
+        },
+      );
+    }
+  });
 };
 
 chrome.runtime.onInstalled.addListener(updateContextMenus);
@@ -85,35 +90,11 @@ chrome.storage.onChanged.addListener(updateContextMenus);
 
 chrome.contextMenus.onClicked.addListener(
   (info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab) => {
-    if (tab == null) {
+    if (tab == null || typeof info.menuItemId !== "string") {
       return;
     }
 
-    if (info.menuItemId === MENU_EXP2) {
-      const selectedText = info.selectionText;
-      chrome.tabs.create({ url: GEMINI_URL }, (newTab: chrome.tabs.Tab) => {
-        chrome.tabs.onUpdated.addListener(function listener(
-          tabId: number,
-          changeInfo,
-        ) {
-          if (tabId === newTab.id && changeInfo.status === "complete") {
-            chrome.tabs.onUpdated.removeListener(listener);
-            if (selectedText != null) {
-              chrome.scripting.executeScript({
-                target: { tabId: newTab.id },
-                func: operateGemini,
-                args: [selectedText],
-              });
-            }
-          }
-        });
-      });
-    }
-
-    if (
-      typeof info.menuItemId === "string" &&
-      info.menuItemId.startsWith(MENU_CHATGPT)
-    ) {
+    if (info.menuItemId.startsWith(MENU_CHATGPT)) {
       const settingIndex = parseInt(info.menuItemId.slice(MENU_CHATGPT.length));
       const selectedText = info.selectionText;
 
@@ -152,6 +133,45 @@ chrome.contextMenus.onClicked.addListener(
               );
             }
           });
+        }
+      });
+    }
+
+    if (info.menuItemId.startsWith(MENU_GEMINI)) {
+      const settingIndex = parseInt(info.menuItemId.slice(MENU_GEMINI.length));
+      const selectedText = info.selectionText;
+
+      chrome.storage.local.get("geminiSettings", (items) => {
+        if (items.geminiSettings) {
+          (items as { geminiSettings: GeminiSetting[] }).geminiSettings.forEach(
+            (setting, index) => {
+              if (index === settingIndex) {
+                chrome.tabs.create(
+                  { url: GEMINI_URL, active: setting.activate },
+                  (newTab: chrome.tabs.Tab) => {
+                    chrome.tabs.onUpdated.addListener(function listener(
+                      tabId: number,
+                      changeInfo,
+                    ) {
+                      if (
+                        tabId === newTab.id &&
+                        changeInfo.status === "complete"
+                      ) {
+                        chrome.tabs.onUpdated.removeListener(listener);
+                        if (selectedText != null) {
+                          chrome.scripting.executeScript({
+                            target: { tabId: newTab.id },
+                            func: operateGemini,
+                            args: [selectedText, setting],
+                          });
+                        }
+                      }
+                    });
+                  },
+                );
+              }
+            },
+          );
         }
       });
     }
