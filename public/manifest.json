@@ -19,5 +19,9 @@
   "host_permissions": [
     "https://chatgpt.com/*",
     "https://gemini.google.com/*"
-  ]
+  ],
+  "icons": {
+    "48": "48x48.png",
+    "128": "128x128.png"
+  }
 }
