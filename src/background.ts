@@ -52,7 +52,7 @@ const updateContextMenus = () => {
   chrome.contextMenus.create({
     id: MENU_ROOT,
     title: "ChatsNavi",
-    contexts: ["all"],
+    contexts: ["selection"],
   });
 
   chrome.storage.local.get(["chatGPTSettings", "geminiSettings"], (items) => {
@@ -63,7 +63,7 @@ const updateContextMenus = () => {
             id: MENU_CHATGPT + index,
             parentId: MENU_ROOT,
             title: setting.name,
-            contexts: ["all"],
+            contexts: ["selection"],
           });
         },
       );
@@ -76,7 +76,7 @@ const updateContextMenus = () => {
             id: MENU_GEMINI + index,
             parentId: MENU_ROOT,
             title: setting.name,
-            contexts: ["all"],
+            contexts: ["selection"],
           });
         },
       );
