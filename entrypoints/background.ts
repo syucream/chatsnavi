@@ -43,6 +43,12 @@ const MENU_GEMINI = "gemini--";
 
 export default defineBackground({
   main() {
+    // popup を無効化して、アイコンクリック時に設定画面を開く
+    browser.action.setPopup({ popup: "" });
+    browser.action.onClicked.addListener(() => {
+      browser.runtime.openOptionsPage();
+    });
+
     const updateContextMenus = async () => {
       await browser.contextMenus.removeAll();
 
