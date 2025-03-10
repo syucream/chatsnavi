@@ -102,8 +102,180 @@ function handleGemini(text: string, autoSubmit: boolean) {
   }
 }
 
+/**
+ * Claudeのプロンプト要素を取得する関数
+ */
+function getClaudePromptElement() {
+  const promptContainer = document.querySelector(
+    'div[aria-label="Write your prompt to Claude"]',
+  );
+  return promptContainer?.querySelector(
+    'div.ProseMirror[contenteditable="true"]',
+  );
+}
+
+/**
+ * Claudeの送信ボタンをクリックする関数
+ */
+function clickClaudeSubmitButton() {
+  const submitButton = document.querySelector<HTMLButtonElement>(
+    'button[aria-label="Send Message"]',
+  );
+  submitButton?.click();
+}
+
+/**
+ * Claudeのプロンプトにテキストを入力し、必要に応じて送信する関数
+ */
+function fillClaudePrompt(
+  promptDiv: Element,
+  text: string,
+  autoSubmit: boolean,
+) {
+  // テキストを入力
+  promptDiv.innerHTML = `<p>${text}</p>`;
+  promptDiv.dispatchEvent(new InputEvent("input", { bubbles: true }));
+
+  // キー入力イベントを発生させて送信ボタンを表示させる
+  simulateKeyPressInClaude(promptDiv);
+
+  // 自動送信が有効な場合
+  if (autoSubmit) {
+    setTimeout(() => {
+      clickClaudeSubmitButton();
+    }, 800); // 待機時間を少し長めに設定
+  }
+}
+
+/**
+ * Claudeのプロンプト入力と送信を処理する関数
+ */
+function handleClaude(text: string, autoSubmit: boolean) {
+  const promptDiv = getClaudePromptElement();
+
+  if (promptDiv) {
+    fillClaudePrompt(promptDiv, text, autoSubmit);
+  } else {
+    console.log("Claude prompt div not found, retrying...");
+    retryClaudePromptFill(text, autoSubmit);
+  }
+}
+
+/**
+ * Claudeのプロンプト入力を再試行する関数
+ */
+function retryClaudePromptFill(text: string, autoSubmit: boolean) {
+  let attempts = 0;
+  const maxAttempts = 10;
+
+  const interval = setInterval(() => {
+    attempts++;
+    const promptDiv = getClaudePromptElement();
+
+    if (promptDiv) {
+      clearInterval(interval);
+      fillClaudePrompt(promptDiv, text, autoSubmit);
+    }
+
+    if (attempts >= maxAttempts) {
+      clearInterval(interval);
+      console.log(
+        "Failed to find Claude prompt div after",
+        maxAttempts,
+        "attempts",
+      );
+    }
+  }, 500);
+}
+
+/**
+ * Claudeのテキストエリアでキー入力をシミュレートする関数
+ */
+function simulateKeyPressInClaude(element: Element) {
+  // スペースキーのキーダウンイベントを発生させる
+  const keydownEvent = new KeyboardEvent("keydown", {
+    key: " ",
+    code: "Space",
+    keyCode: 32,
+    which: 32,
+    bubbles: true,
+    cancelable: true,
+    composed: true,
+    shiftKey: false,
+    ctrlKey: false,
+    altKey: false,
+    metaKey: false,
+  });
+  element.dispatchEvent(keydownEvent);
+
+  // スペースキーのキープレスイベントを発生させる
+  const keypressEvent = new KeyboardEvent("keypress", {
+    key: " ",
+    code: "Space",
+    keyCode: 32,
+    which: 32,
+    bubbles: true,
+    cancelable: true,
+    composed: true,
+    shiftKey: false,
+    ctrlKey: false,
+    altKey: false,
+    metaKey: false,
+  });
+  element.dispatchEvent(keypressEvent);
+
+  // スペースキーのキーアップイベントを発生させる
+  const keyupEvent = new KeyboardEvent("keyup", {
+    key: " ",
+    code: "Space",
+    keyCode: 32,
+    which: 32,
+    bubbles: true,
+    cancelable: true,
+    composed: true,
+    shiftKey: false,
+    ctrlKey: false,
+    altKey: false,
+    metaKey: false,
+  });
+  element.dispatchEvent(keyupEvent);
+
+  // バックスペースキーをシミュレートしてスペースを削除する
+  setTimeout(() => {
+    const backspaceEvent = new KeyboardEvent("keydown", {
+      key: "Backspace",
+      code: "Backspace",
+      keyCode: 8,
+      which: 8,
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      shiftKey: false,
+      ctrlKey: false,
+      altKey: false,
+      metaKey: false,
+    });
+    element.dispatchEvent(backspaceEvent);
+    element.dispatchEvent(
+      new KeyboardEvent("keyup", {
+        key: "Backspace",
+        code: "Backspace",
+        keyCode: 8,
+        which: 8,
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+      }),
+    );
+  }, 100);
+}
+
 export default defineContentScript({
-  matches: ["https://chatgpt.com/*", "https://gemini.google.com/*"],
+  matches: [
+    "https://chatgpt.com/*",
+    "https://gemini.google.com/*",
+    "https://claude.ai/*",
+  ],
   main() {
     browser.runtime.onMessage.addListener((message: MessagePayload) => {
       if (message.type !== "FILL_PROMPT") return;
@@ -111,6 +283,8 @@ export default defineContentScript({
         handleChatGPT(message.text, message.autoSubmit);
       } else if (message.target === "gemini") {
         handleGemini(message.text, message.autoSubmit);
+      } else if (message.target === "claude") {
+        handleClaude(message.text, message.autoSubmit);
       }
     });
   },
