@@ -6,6 +6,10 @@ export default defineConfig({
   modules: ["@wxt-dev/module-react"],
   manifest: {
     permissions: ["activeTab", "contextMenus", "scripting", "storage"],
-    host_permissions: ["https://chatgpt.com/*", "https://gemini.google.com/*"],
+    host_permissions: [
+      "https://chatgpt.com/*",
+      "https://gemini.google.com/*",
+      "https://claude.ai/*",
+    ],
   },
 });

@@ -11,23 +11,36 @@ export interface GeminiSetting {
   activate: boolean;
 }
 
+export interface ClaudeSetting {
+  name: string;
+  autoSubmit: boolean;
+  activate: boolean;
+}
+
 export type MessagePayload = {
   type: "FILL_PROMPT";
-  target: "chatgpt" | "gemini";
+  target: "chatgpt" | "gemini" | "claude";
   text: string;
   autoSubmit: boolean;
 };
 
 export const storage = {
-  async getItems(keys: ("chatGPTSettings" | "geminiSettings")[]) {
+  async getItems(
+    keys: ("chatGPTSettings" | "geminiSettings" | "claudeSettings")[],
+  ) {
     return browser.storage.local.get(keys) as Promise<{
       chatGPTSettings?: ChatGPTSetting[];
       geminiSettings?: GeminiSetting[];
+      claudeSettings?: ClaudeSetting[];
     }>;
   },
-  async getItem(key: "chatGPTSettings" | "geminiSettings") {
+  async getItem(key: "chatGPTSettings" | "geminiSettings" | "claudeSettings") {
     const result = await browser.storage.local.get(key);
-    return result[key] as ChatGPTSetting[] | GeminiSetting[] | undefined;
+    return result[key] as
+      | ChatGPTSetting[]
+      | GeminiSetting[]
+      | ClaudeSetting[]
+      | undefined;
   },
   watch(callback: () => void) {
     browser.storage.onChanged.addListener(callback);
@@ -36,10 +49,12 @@ export const storage = {
 
 const CHATGPT_URL = "https://chatgpt.com/";
 const GEMINI_URL = "https://gemini.google.com/app";
+const CLAUDE_URL = "https://claude.ai/chats";
 
 const MENU_ROOT = "root";
 const MENU_CHATGPT = "chatgpt--";
 const MENU_GEMINI = "gemini--";
+const MENU_CLAUDE = "claude--";
 
 export default defineBackground({
   main() {
@@ -58,8 +73,15 @@ export default defineBackground({
         contexts: ["selection"],
       });
 
-      const { chatGPTSettings = [], geminiSettings = [] } =
-        await storage.getItems(["chatGPTSettings", "geminiSettings"]);
+      const {
+        chatGPTSettings = [],
+        geminiSettings = [],
+        claudeSettings = [],
+      } = await storage.getItems([
+        "chatGPTSettings",
+        "geminiSettings",
+        "claudeSettings",
+      ]);
 
       chatGPTSettings.forEach((setting, index) => {
         browser.contextMenus.create({
@@ -73,6 +95,15 @@ export default defineBackground({
       geminiSettings.forEach((setting, index) => {
         browser.contextMenus.create({
           id: `${MENU_GEMINI}${index}`,
+          parentId: MENU_ROOT,
+          title: setting.name,
+          contexts: ["selection"],
+        });
+      });
+
+      claudeSettings.forEach((setting, index) => {
+        browser.contextMenus.create({
+          id: `${MENU_CLAUDE}${index}`,
           parentId: MENU_ROOT,
           title: setting.name,
           contexts: ["selection"],
@@ -135,6 +166,32 @@ export default defineBackground({
               browser.tabs.sendMessage(tabId, {
                 type: "FILL_PROMPT",
                 target: "gemini",
+                text: info.selectionText,
+                autoSubmit: setting.autoSubmit,
+              });
+            }
+          },
+        );
+      }
+
+      if (info.menuItemId.startsWith(MENU_CLAUDE)) {
+        const index = parseInt(info.menuItemId.slice(MENU_CLAUDE.length));
+        const settings = await storage.getItem("claudeSettings");
+        const setting = settings?.[index];
+        if (!setting) return;
+
+        const newTab = await browser.tabs.create({
+          url: CLAUDE_URL,
+          active: setting.activate,
+        });
+
+        browser.tabs.onUpdated.addListener(
+          function listener(tabId, changeInfo) {
+            if (tabId === newTab.id && changeInfo.status === "complete") {
+              browser.tabs.onUpdated.removeListener(listener);
+              browser.tabs.sendMessage(tabId, {
+                type: "FILL_PROMPT",
+                target: "claude",
                 text: info.selectionText,
                 autoSubmit: setting.autoSubmit,
               });
