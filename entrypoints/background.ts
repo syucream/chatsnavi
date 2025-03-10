@@ -43,7 +43,7 @@ const MENU_GEMINI = "gemini--";
 
 export default defineBackground({
   main() {
-    // popup を無効化して、アイコンクリック時に設定画面を開く
+    // popup を無効にして、クリック時に設定画面を開く
     browser.action.setPopup({ popup: "" });
     browser.action.onClicked.addListener(() => {
       browser.runtime.openOptionsPage();
@@ -91,13 +91,12 @@ export default defineBackground({
       if (info.menuItemId.startsWith(MENU_CHATGPT)) {
         const index = parseInt(info.menuItemId.slice(MENU_CHATGPT.length));
         const settings = await storage.getItem("chatGPTSettings");
-        const setting = settings?.[index];
+        const setting = settings?.[index] as ChatGPTSetting;
         if (!setting) return;
 
         const url = setting.gpt
           ? `${CHATGPT_URL}g/${setting.gpt}`
           : CHATGPT_URL;
-
         const newTab = await browser.tabs.create({
           url,
           active: setting.activate,
