@@ -1,13 +1,7 @@
 {
+  "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "sourceMap": true,
-    "strict": true,
-    "module": "es6",
-    "target": "es6",
-    "types": ["chrome"]
-  },
-  "include": [
-    "./src/**/*"
-  ]
+    "allowImportingTsExtensions": true,
+    "jsx": "react-jsx"
+  }
 }

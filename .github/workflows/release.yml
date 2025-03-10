@@ -1,36 +1,57 @@
 name: release
 
 on:
-    release:
-        types: [created]
+  release:
+    types: [created]
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write
-        steps:
-        - uses: actions/checkout@v2
+  build-and-upload:
+    runs-on: ubuntu-latest
 
-        - name: Set up Node.js
-          uses: actions/setup-node@v2
-          with:
-              node-version: 20
+    strategy:
+      matrix:
+        node-version: [20.x]
+        browser: [chrome, firefox]
 
-        - name: Install dependencies
-          run: npm install
+    steps:
+      - uses: actions/checkout@v4
 
-        - name: Run build
-          run: npm run build
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
 
-        - name: Archive production artifacts
-          run: zip -r dist.zip dist/
+      - name: Install dependencies
+        run: npm ci
 
-        - uses: actions/upload-release-asset@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            upload_url: ${{ github.event.release.upload_url }}
-            asset_path: ./dist.zip
-            asset_name: dist.zip
-            asset_content_type: application/zip
+      - name: Build and zip extension
+        id: build
+        run: |
+          if [ "${{ matrix.browser }}" == "firefox" ]; then
+            npm run zip:firefox
+            # 実際の出力ファイルを見つける
+            ZIP_PATH=$(find .output -name "chatsnavi-*-firefox.zip" -type f)
+            # ファイル名を取得
+            ZIP_NAME=$(basename $ZIP_PATH)
+            echo "ZIP_PATH=$ZIP_PATH" >> $GITHUB_OUTPUT
+            echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_OUTPUT
+          else
+            npm run zip
+            # 実際の出力ファイルを見つける
+            ZIP_PATH=$(find .output -name "chatsnavi-*-chrome.zip" -type f)
+            # ファイル名を取得
+            ZIP_NAME=$(basename $ZIP_PATH)
+            echo "ZIP_PATH=$ZIP_PATH" >> $GITHUB_OUTPUT
+            echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ steps.build.outputs.ZIP_PATH }}
+          asset_name: ${{ steps.build.outputs.ZIP_NAME }}
+          asset_content_type: application/zip
