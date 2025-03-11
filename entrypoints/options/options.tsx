@@ -21,6 +21,12 @@ interface ClaudeSetting {
   activate: boolean;
 }
 
+interface DeepSeekSetting {
+  name: string;
+  autoSubmit: boolean;
+  activate: boolean;
+}
+
 const Container = styled.div`
   width: 700px;
   height: 600px;
@@ -258,10 +264,84 @@ const ClaudeSettingsTable: React.FC<{
   );
 };
 
+const DeepSeekSettingsTable: React.FC<{
+  settings: DeepSeekSetting[];
+  onSettingsChange: (settings: DeepSeekSetting[]) => void;
+}> = ({ settings, onSettingsChange }) => {
+  const handleDelete = (index: number) => {
+    const newSettings = settings.filter((_, i) => i !== index);
+    onSettingsChange(newSettings);
+  };
+
+  const handleChange = (
+    index: number,
+    field: keyof DeepSeekSetting,
+    value: string | boolean,
+  ) => {
+    const newSettings = settings.map((setting, i) => {
+      if (i === index) {
+        return { ...setting, [field]: value };
+      }
+      return setting;
+    });
+    onSettingsChange(newSettings);
+  };
+
+  return (
+    <Table>
+      <thead>
+        <tr>
+          <th>name</th>
+          <th>auto-submit</th>
+          <th>activate a new tab</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {settings.map((setting, index) => (
+          <tr key={index}>
+            <td>
+              <Input
+                type="text"
+                value={setting.name}
+                onChange={(e) => handleChange(index, "name", e.target.value)}
+              />
+            </td>
+            <td>
+              <input
+                type="checkbox"
+                checked={setting.autoSubmit}
+                onChange={(e) =>
+                  handleChange(index, "autoSubmit", e.target.checked)
+                }
+              />
+            </td>
+            <td>
+              <input
+                type="checkbox"
+                checked={setting.activate}
+                onChange={(e) =>
+                  handleChange(index, "activate", e.target.checked)
+                }
+              />
+            </td>
+            <td>
+              <button onClick={() => handleDelete(index)}>Delete</button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </Table>
+  );
+};
+
 export const Options: React.FC = () => {
   const [chatGPTSettings, setChatGPTSettings] = useState<ChatGPTSetting[]>([]);
   const [geminiSettings, setGeminiSettings] = useState<GeminiSetting[]>([]);
   const [claudeSettings, setClaudeSettings] = useState<ClaudeSetting[]>([]);
+  const [deepSeekSettings, setDeepSeekSettings] = useState<DeepSeekSetting[]>(
+    [],
+  );
 
   useEffect(() => {
     storage
@@ -269,6 +349,7 @@ export const Options: React.FC = () => {
         "local:chatGPTSettings",
         "local:geminiSettings",
         "local:claudeSettings",
+        "local:deepSeekSettings",
       ])
       .then((items) => {
         items.forEach(({ key, value }) => {
@@ -281,6 +362,9 @@ export const Options: React.FC = () => {
           if (key === "local:claudeSettings" && value != null) {
             setClaudeSettings(value);
           }
+          if (key === "local:deepSeekSettings" && value != null) {
+            setDeepSeekSettings(value);
+          }
         });
       });
   }, []);
@@ -290,6 +374,7 @@ export const Options: React.FC = () => {
       { key: "local:chatGPTSettings", value: chatGPTSettings },
       { key: "local:geminiSettings", value: geminiSettings },
       { key: "local:claudeSettings", value: claudeSettings },
+      { key: "local:deepSeekSettings", value: deepSeekSettings },
     ]);
   };
 
@@ -310,6 +395,13 @@ export const Options: React.FC = () => {
   const handleAppendClaude = () => {
     setClaudeSettings([
       ...claudeSettings,
+      { name: "", autoSubmit: false, activate: false },
+    ]);
+  };
+
+  const handleAppendDeepSeek = () => {
+    setDeepSeekSettings([
+      ...deepSeekSettings,
       { name: "", autoSubmit: false, activate: false },
     ]);
   };
@@ -349,6 +441,17 @@ export const Options: React.FC = () => {
           />
           <button onClick={handleAppendClaude}>
             Append a new Claude setting
+          </button>
+        </div>
+
+        <h2>DeepSeek settings</h2>
+        <div>
+          <DeepSeekSettingsTable
+            settings={deepSeekSettings}
+            onSettingsChange={setDeepSeekSettings}
+          />
+          <button onClick={handleAppendDeepSeek}>
+            Append a new DeepSeek setting
           </button>
         </div>
       </div>
