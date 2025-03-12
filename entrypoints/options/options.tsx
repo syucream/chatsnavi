@@ -1,6 +1,28 @@
 import React, { useEffect, useState } from "react";
-import styled from "styled-components";
 import { storage } from "wxt/storage";
+import "./globals.css";
+
+// Import Shadcn/ui components
+import { Button } from "./components/ui/button";
+import { Input } from "./components/ui/input";
+import { Checkbox } from "./components/ui/checkbox";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "./components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
 
 interface ChatGPTSetting {
   name: string;
@@ -27,22 +49,6 @@ interface DeepSeekSetting {
   activate: boolean;
 }
 
-const Container = styled.div`
-  width: 700px;
-  height: 600px;
-`;
-
-const Table = styled.table`
-  width: 100%;
-  margin-bottom: 1rem;
-`;
-
-const Input = styled.input`
-  &[type="text"] {
-    min-width: 300px;
-  }
-`;
-
 const ChatGPTSettingsTable: React.FC<{
   settings: ChatGPTSetting[];
   onSettingsChange: (settings: ChatGPTSetting[]) => void;
@@ -68,56 +74,60 @@ const ChatGPTSettingsTable: React.FC<{
 
   return (
     <Table>
-      <thead>
-        <tr>
-          <th>name</th>
-          <th>auto-submit</th>
-          <th>activate a new tab</th>
-          <th>GPT id (e.g. g-XXXXXXXXX-hoge-fuga)</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Name</TableHead>
+          <TableHead>Auto Submit</TableHead>
+          <TableHead>Open in New Tab</TableHead>
+          <TableHead>GPT ID (e.g. g-XXXXXXXXX-hoge-fuga)</TableHead>
+          <TableHead></TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {settings.map((setting, index) => (
-          <tr key={index}>
-            <td>
+          <TableRow key={index}>
+            <TableCell>
               <Input
                 type="text"
                 value={setting.name}
                 onChange={(e) => handleChange(index, "name", e.target.value)}
               />
-            </td>
-            <td>
-              <input
-                type="checkbox"
+            </TableCell>
+            <TableCell>
+              <Checkbox
                 checked={setting.autoSubmit}
-                onChange={(e) =>
-                  handleChange(index, "autoSubmit", e.target.checked)
+                onCheckedChange={(checked) =>
+                  handleChange(index, "autoSubmit", checked === true)
                 }
               />
-            </td>
-            <td>
-              <input
-                type="checkbox"
+            </TableCell>
+            <TableCell>
+              <Checkbox
                 checked={setting.activate}
-                onChange={(e) =>
-                  handleChange(index, "activate", e.target.checked)
+                onCheckedChange={(checked) =>
+                  handleChange(index, "activate", checked === true)
                 }
               />
-            </td>
-            <td>
+            </TableCell>
+            <TableCell>
               <Input
                 type="text"
                 value={setting.gpt ?? ""}
                 onChange={(e) => handleChange(index, "gpt", e.target.value)}
               />
-            </td>
-            <td>
-              <button onClick={() => handleDelete(index)}>Delete</button>
-            </td>
-          </tr>
+            </TableCell>
+            <TableCell>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDelete(index)}
+              >
+                Delete
+              </Button>
+            </TableCell>
+          </TableRow>
         ))}
-      </tbody>
+      </TableBody>
     </Table>
   );
 };
@@ -147,48 +157,52 @@ const GeminiSettingsTable: React.FC<{
 
   return (
     <Table>
-      <thead>
-        <tr>
-          <th>name</th>
-          <th>auto-submit</th>
-          <th>activate a new tab</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Name</TableHead>
+          <TableHead>Auto Submit</TableHead>
+          <TableHead>Open in New Tab</TableHead>
+          <TableHead></TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {settings.map((setting, index) => (
-          <tr key={index}>
-            <td>
+          <TableRow key={index}>
+            <TableCell>
               <Input
                 type="text"
                 value={setting.name}
                 onChange={(e) => handleChange(index, "name", e.target.value)}
               />
-            </td>
-            <td>
-              <input
-                type="checkbox"
+            </TableCell>
+            <TableCell>
+              <Checkbox
                 checked={setting.autoSubmit}
-                onChange={(e) =>
-                  handleChange(index, "autoSubmit", e.target.checked)
+                onCheckedChange={(checked) =>
+                  handleChange(index, "autoSubmit", checked === true)
                 }
               />
-            </td>
-            <td>
-              <input
-                type="checkbox"
+            </TableCell>
+            <TableCell>
+              <Checkbox
                 checked={setting.activate}
-                onChange={(e) =>
-                  handleChange(index, "activate", e.target.checked)
+                onCheckedChange={(checked) =>
+                  handleChange(index, "activate", checked === true)
                 }
               />
-            </td>
-            <td>
-              <button onClick={() => handleDelete(index)}>Delete</button>
-            </td>
-          </tr>
+            </TableCell>
+            <TableCell>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDelete(index)}
+              >
+                Delete
+              </Button>
+            </TableCell>
+          </TableRow>
         ))}
-      </tbody>
+      </TableBody>
     </Table>
   );
 };
@@ -218,48 +232,52 @@ const ClaudeSettingsTable: React.FC<{
 
   return (
     <Table>
-      <thead>
-        <tr>
-          <th>name</th>
-          <th>auto-submit</th>
-          <th>activate a new tab</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Name</TableHead>
+          <TableHead>Auto Submit</TableHead>
+          <TableHead>Open in New Tab</TableHead>
+          <TableHead></TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {settings.map((setting, index) => (
-          <tr key={index}>
-            <td>
+          <TableRow key={index}>
+            <TableCell>
               <Input
                 type="text"
                 value={setting.name}
                 onChange={(e) => handleChange(index, "name", e.target.value)}
               />
-            </td>
-            <td>
-              <input
-                type="checkbox"
+            </TableCell>
+            <TableCell>
+              <Checkbox
                 checked={setting.autoSubmit}
-                onChange={(e) =>
-                  handleChange(index, "autoSubmit", e.target.checked)
+                onCheckedChange={(checked) =>
+                  handleChange(index, "autoSubmit", checked === true)
                 }
               />
-            </td>
-            <td>
-              <input
-                type="checkbox"
+            </TableCell>
+            <TableCell>
+              <Checkbox
                 checked={setting.activate}
-                onChange={(e) =>
-                  handleChange(index, "activate", e.target.checked)
+                onCheckedChange={(checked) =>
+                  handleChange(index, "activate", checked === true)
                 }
               />
-            </td>
-            <td>
-              <button onClick={() => handleDelete(index)}>Delete</button>
-            </td>
-          </tr>
+            </TableCell>
+            <TableCell>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDelete(index)}
+              >
+                Delete
+              </Button>
+            </TableCell>
+          </TableRow>
         ))}
-      </tbody>
+      </TableBody>
     </Table>
   );
 };
@@ -289,48 +307,52 @@ const DeepSeekSettingsTable: React.FC<{
 
   return (
     <Table>
-      <thead>
-        <tr>
-          <th>name</th>
-          <th>auto-submit</th>
-          <th>activate a new tab</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Name</TableHead>
+          <TableHead>Auto Submit</TableHead>
+          <TableHead>Open in New Tab</TableHead>
+          <TableHead></TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {settings.map((setting, index) => (
-          <tr key={index}>
-            <td>
+          <TableRow key={index}>
+            <TableCell>
               <Input
                 type="text"
                 value={setting.name}
                 onChange={(e) => handleChange(index, "name", e.target.value)}
               />
-            </td>
-            <td>
-              <input
-                type="checkbox"
+            </TableCell>
+            <TableCell>
+              <Checkbox
                 checked={setting.autoSubmit}
-                onChange={(e) =>
-                  handleChange(index, "autoSubmit", e.target.checked)
+                onCheckedChange={(checked) =>
+                  handleChange(index, "autoSubmit", checked === true)
                 }
               />
-            </td>
-            <td>
-              <input
-                type="checkbox"
+            </TableCell>
+            <TableCell>
+              <Checkbox
                 checked={setting.activate}
-                onChange={(e) =>
-                  handleChange(index, "activate", e.target.checked)
+                onCheckedChange={(checked) =>
+                  handleChange(index, "activate", checked === true)
                 }
               />
-            </td>
-            <td>
-              <button onClick={() => handleDelete(index)}>Delete</button>
-            </td>
-          </tr>
+            </TableCell>
+            <TableCell>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDelete(index)}
+              >
+                Delete
+              </Button>
+            </TableCell>
+          </TableRow>
         ))}
-      </tbody>
+      </TableBody>
     </Table>
   );
 };
@@ -407,56 +429,88 @@ export const Options: React.FC = () => {
   };
 
   return (
-    <Container>
-      <h1>ChatsNavi Options</h1>
+    <div className="min-h-screen bg-background p-6">
+      <div className="container mx-auto max-w-4xl space-y-6">
+        <Card className="border-none shadow-md">
+          <CardHeader className="bg-primary text-primary-foreground rounded-t-lg">
+            <CardTitle className="text-2xl">ChatsNavi Settings</CardTitle>
+            <CardDescription className="text-primary-foreground/80">
+              Manage settings for each AI chat service
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-6">
+            <Tabs defaultValue="chatgpt" className="w-full">
+              <TabsList className="mb-4 w-full justify-start">
+                <TabsTrigger value="chatgpt">ChatGPT</TabsTrigger>
+                <TabsTrigger value="gemini">Gemini</TabsTrigger>
+                <TabsTrigger value="claude">Claude</TabsTrigger>
+                <TabsTrigger value="deepseek">DeepSeek</TabsTrigger>
+              </TabsList>
 
-      <div>
-        <h2>ChatGPT settings</h2>
-        <div>
-          <ChatGPTSettingsTable
-            settings={chatGPTSettings}
-            onSettingsChange={setChatGPTSettings}
-          />
-          <button onClick={handleAppendChatGPT}>
-            Append a new ChatGPT setting
-          </button>
-        </div>
+              <TabsContent value="chatgpt" className="space-y-4">
+                <ChatGPTSettingsTable
+                  settings={chatGPTSettings}
+                  onSettingsChange={setChatGPTSettings}
+                />
+                <Button
+                  onClick={handleAppendChatGPT}
+                  variant="outline"
+                  className="mt-2"
+                >
+                  Add ChatGPT Setting
+                </Button>
+              </TabsContent>
 
-        <h2>Gemini settings</h2>
-        <div>
-          <GeminiSettingsTable
-            settings={geminiSettings}
-            onSettingsChange={setGeminiSettings}
-          />
-          <button onClick={handleAppendGemini}>
-            Append a new Gemini setting
-          </button>
-        </div>
+              <TabsContent value="gemini" className="space-y-4">
+                <GeminiSettingsTable
+                  settings={geminiSettings}
+                  onSettingsChange={setGeminiSettings}
+                />
+                <Button
+                  onClick={handleAppendGemini}
+                  variant="outline"
+                  className="mt-2"
+                >
+                  Add Gemini Setting
+                </Button>
+              </TabsContent>
 
-        <h2>Claude settings</h2>
-        <div>
-          <ClaudeSettingsTable
-            settings={claudeSettings}
-            onSettingsChange={setClaudeSettings}
-          />
-          <button onClick={handleAppendClaude}>
-            Append a new Claude setting
-          </button>
-        </div>
+              <TabsContent value="claude" className="space-y-4">
+                <ClaudeSettingsTable
+                  settings={claudeSettings}
+                  onSettingsChange={setClaudeSettings}
+                />
+                <Button
+                  onClick={handleAppendClaude}
+                  variant="outline"
+                  className="mt-2"
+                >
+                  Add Claude Setting
+                </Button>
+              </TabsContent>
 
-        <h2>DeepSeek settings</h2>
-        <div>
-          <DeepSeekSettingsTable
-            settings={deepSeekSettings}
-            onSettingsChange={setDeepSeekSettings}
-          />
-          <button onClick={handleAppendDeepSeek}>
-            Append a new DeepSeek setting
-          </button>
-        </div>
+              <TabsContent value="deepseek" className="space-y-4">
+                <DeepSeekSettingsTable
+                  settings={deepSeekSettings}
+                  onSettingsChange={setDeepSeekSettings}
+                />
+                <Button
+                  onClick={handleAppendDeepSeek}
+                  variant="outline"
+                  className="mt-2"
+                >
+                  Add DeepSeek Setting
+                </Button>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+          <CardFooter className="bg-muted/20 p-6 flex justify-end">
+            <Button onClick={handleSave} className="w-full sm:w-auto">
+              Save
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
-
-      <button onClick={handleSave}>Save</button>
-    </Container>
+    </div>
   );
 };

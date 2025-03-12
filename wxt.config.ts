@@ -12,5 +12,9 @@ export default defineConfig({
       "https://claude.ai/*",
       "https://chat.deepseek.com/*",
     ],
+    content_security_policy: {
+      extension_pages:
+        "script-src 'self' 'wasm-unsafe-eval' http://localhost:*; object-src 'self'",
+    },
   },
 });
